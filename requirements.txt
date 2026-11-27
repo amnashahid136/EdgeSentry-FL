@@ -1,0 +1,6 @@
+tensorflow-cpu==2.21.0
+numpy>=1.26
+scipy>=1.10        # reads the real CWRU .mat files; Spearman correlation in the XAI report
+matplotlib>=3.8
+flask>=3.0
+paho-mqtt>=1.6     # works with 1.x and 2.x (see common.new_mqtt_client)

@@ -1,0 +1,38 @@
+{% extends "base.html" %}{% block title %}Privacy{% endblock %}
+{% block body %}
+<h1>Privacy & Security at the Edge</h1>
+<p class="sub">Keeping raw sensor data on the device is the first privacy layer. Differential privacy (DP) adds a second, <i>mathematical</i> one for the model updates themselves. This page is honest about how much each one buys — and what this demo does <b>not</b> protect.</p>
+
+<div class="grid g2">
+  <div class="card"><h3>1 · Data minimisation: what leaves the device</h3>
+    <div class="muted small">Latest real message from an edge node (fields trimmed of the demo-only ground truth):</div>
+    <pre id="payload" class="mono">no edge node reporting yet — start the demo</pre>
+    <div id="bw"></div></div>
+  <div class="card"><h3>2 · Threat model</h3><div class="tablewrap"><table>
+    <thead><tr><th>Threat</th><th>In this project</th></tr></thead><tbody>
+    <tr><td>Server reads raw vibration data</td><td class="fit-ok">Prevented — only decisions & weights leave the node</td></tr>
+    <tr><td>Model update leaks training data</td><td>Mitigated only with DP (below); plain FedAvg does <b>not</b> stop it</td></tr>
+    <tr><td>Tampered / wrong model on a node</td><td>Detected — SHA-256 of the running model is in every message</td></tr>
+    <tr><td>Eavesdropping on MQTT</td><td class="fit-no">Not protected — demo broker is plaintext, anonymous</td></tr>
+    <tr><td>Fake nodes / forged commands</td><td class="fit-no">Not protected — no authentication on MQTT or the command API</td></tr>
+    <tr><td>Malicious client poisons FedAvg</td><td class="fit-no">Not protected — no robust aggregation / secure aggregation</td></tr></tbody></table></div>
+    <div class="muted small" style="margin-top:6px">Production fix list: TLS + client certificates on MQTT, broker ACLs per topic, signed model updates, secure aggregation.</div></div>
+</div>
+
+<h2>Differential privacy: the price of a guarantee</h2>
+<div class="grid g2">
+  <div class="card"><h3>DP-FedAvg: accuracy vs ε, by number of clients</h3><div class="muted small">Client-level (ε, δ=10⁻⁵)-DP, Rényi accountant. Lower ε = stronger privacy. Dotted = no-noise reference.</div><div class="chartbox tall"><canvas id="ch-dp"></canvas></div></div>
+  <div class="card"><h3>Results</h3><div id="dp-table" class="tablewrap"></div></div>
+</div>
+<div class="callout bad"><b>Read these numbers with care.</b> The bundled DP sweep is deliberately short (6 rounds, 1 seed) so it can be regenerated quickly, and with small client shards training is still unstable at round 6 — so the curve is <b>noisy and not always monotonic</b> (for example a clip-only run can land below a noisier one). Treat it as the <i>shape</i> of the trade-off, not as precise values. For a proper study run <code>python federated/compare_dp.py --seeds 0 1 2 --clients 3 12 24 --rounds 15</code>.</div>
+<div id="dp-verdict"></div>
+
+<h2>ε calculator</h2>
+<div class="card"><div class="muted small">Same accountant as <code>federated/dp_utils.py</code> (Gaussian mechanism, RDP, full participation). Try to find a setting with ε &lt; 10.</div>
+  <div class="row2" style="margin-top:8px"><div><span class="lbl">noise multiplier σ</span><input type="number" id="c-sigma" value="0.3" step="0.05" min="0.01"></div>
+  <div><span class="lbl">rounds T</span><input type="number" id="c-T" value="8" min="1"></div>
+  <div><span class="lbl">δ</span><input type="number" id="c-delta" value="0.00001" step="0.000001"></div>
+  <div><span class="lbl">clients K</span><input type="number" id="c-K" value="24" min="1"></div></div>
+  <div id="c-out" style="margin-top:10px"></div></div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/privacy.js') }}"></script>{% endblock %}

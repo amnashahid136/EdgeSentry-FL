@@ -1,0 +1,62 @@
+{% extends "base.html" %}{% block title %}About{% endblock %}
+{% block body %}
+<h1>About EdgeSentry</h1>
+<p class="sub">EdgeSentry detects bearing faults (normal · inner-race · outer-race · ball) <b>on the machine itself</b>, with a compressed model trained collaboratively across machines by federated learning — no raw sensor data leaves a device.</p>
+
+<div class="card"><h3>Architecture</h3>
+<svg viewBox="0 0 900 250" style="width:100%;height:auto" font-family="sans-serif" font-size="13">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8d99b3"/></marker></defs>
+  <g fill="none" stroke="#8d99b3" stroke-width="1.6" marker-end="url(#ar)">
+    <path d="M205 70 H330"/><path d="M205 125 H330"/><path d="M205 180 H330"/>
+    <path d="M520 125 H600"/><path d="M600 160 H520" /><path d="M740 125 H790"/></g>
+  <g stroke="#60a5fa" stroke-width="1.5" fill="rgba(96,165,250,.12)">
+    <rect x="20" y="45" width="185" height="50" rx="10"/><rect x="20" y="100" width="185" height="50" rx="10"/><rect x="20" y="155" width="185" height="50" rx="10"/></g>
+  <g fill="currentColor" text-anchor="middle"><text x="112" y="68">edge01 · 0.007 in</text><text x="112" y="86" fill="#8d99b3" font-size="11">accelerometer → INT8 model</text>
+    <text x="112" y="123">edge02 · 0.014 in</text><text x="112" y="141" fill="#8d99b3" font-size="11">accelerometer → INT8 model</text>
+    <text x="112" y="178">edge03 · 0.021 in</text><text x="112" y="196" fill="#8d99b3" font-size="11">accelerometer → INT8 model</text></g>
+  <rect x="330" y="85" width="190" height="80" rx="10" stroke="#fbbf24" stroke-width="1.5" fill="rgba(251,191,36,.1)"/>
+  <g fill="currentColor" text-anchor="middle"><text x="425" y="118">MQTT broker</text><text x="425" y="137" fill="#8d99b3" font-size="11">status ↑ · commands ↓</text></g>
+  <rect x="600" y="60" width="140" height="130" rx="10" stroke="#2dd4bf" stroke-width="1.5" fill="rgba(45,212,191,.1)"/>
+  <g fill="currentColor" text-anchor="middle"><text x="670" y="105">Flask cloud</text><text x="670" y="124" fill="#8d99b3" font-size="11">fleet · alarms</text><text x="670" y="140" fill="#8d99b3" font-size="11">XAI (FP32 model)</text><text x="670" y="156" fill="#8d99b3" font-size="11">results & analysis</text></g>
+  <rect x="790" y="85" width="95" height="80" rx="10" stroke="#a78bfa" stroke-width="1.5" fill="rgba(167,139,250,.1)"/>
+  <g fill="currentColor" text-anchor="middle"><text x="837" y="122">Operator</text><text x="837" y="140" fill="#8d99b3" font-size="11">browser</text></g>
+  <text x="20" y="235" fill="#8d99b3" font-size="11.5">Offline, in the lab: FedAvg across the 3 nodes' local data → global model → prune + INT8 quantize → deployed to the nodes (OTA-style swap).</text>
+</svg></div>
+
+<div class="grid g2" style="margin-top:14px">
+<div class="card"><h3>Edge-computing features built in</h3><ul style="margin:0;padding-left:18px">
+ <li><b>On-device inference</b> with an INT8 TFLite model — the decision never needs the cloud</li>
+ <li><b>On-device debounced alarm</b> that keeps working with the uplink cut</li>
+ <li><b>Store-and-forward</b>: bounded buffer, backlog flushed on reconnect</li>
+ <li><b>Report-on-change</b> + heartbeat to save bandwidth and energy</li>
+ <li><b>Model hot-swap</b> (full ↔ pruned) from the dashboard, with SHA-256 integrity</li>
+ <li><b>Edge orchestration</b>: control channel from cloud to edge over MQTT</li>
+ <li><b>Condition-monitoring features</b> (kurtosis, crest factor) computed on-device</li>
+ <li><b>Uncertainty flag</b> for low-confidence windows (possible novel faults)</li>
+ <li><b>Sensor-noise injection</b> to study degradation live</li>
+ <li><b>Resource limits</b> in Docker (0.5 CPU, 256 MB) to mimic a small device</li>
+ <li><b>Real-time check</b>: latency vs. the 21 ms window budget</li>
+ <li><b>Edge-fit calculator</b> for MCU/SBC flash & RAM budgets</li></ul></div>
+<div class="card"><h3>Model & data</h3>
+ <p class="small">1-D CNN: 3 conv blocks (16/32/64 filters, BatchNorm) → global average pooling → dense 32 → softmax(4). 11 972 parameters, ≈ 0.98 M MACs per window, 27.8 KB as INT8.</p>
+ <p class="small">Data: real <b>CWRU Bearing Data Center</b> drive-end recordings at 48 kHz, 1 hp load. Each of the 3 machines holds one defect size (0.007 / 0.014 / 0.021 in) → naturally non-IID. Windows are 1024 samples, per-window z-normalised.</p>
+ <p class="small"><b>Leak-free split:</b> each recording is cut in time — the first 70% yields training windows (50% overlap), the last 30% yields test windows (no overlap), with a gap. No test sample appears in any training window.</p></div>
+</div>
+
+<div class="card" style="margin-top:14px"><h3>Honest limitations</h3><ul style="margin:0;padding-left:18px">
+ <li><b>Federated training is simulated in one process.</b> The data flow follows the FL protocol, but nodes do not train over the network. Only inference and monitoring run as separate edge nodes over MQTT.</li>
+ <li><b>No real edge hardware was used.</b> Latency is measured on a laptop/server CPU; peak-RAM and MCU time are analytic estimates.</li>
+ <li><b>One lab, one load condition, 3 defect sizes.</b> Accuracy on a <i>new</i> defect size is much lower (see Federated Learning page). Real machines add speed/load variation and noise.</li>
+ <li><b>Noise sensitivity:</b> trained on clean data; accuracy falls steeply at low SNR.</li>
+ <li><b>FedAvg trails pooled training</b> because of non-IID client drift; DP only gives a meaningful guarantee with far more clients.</li>
+ <li>Edge nodes replay held-out test windows as a stand-in for an accelerometer; the broker is plaintext and unauthenticated.</li></ul></div>
+
+<div class="card" style="margin-top:14px"><h3>Pipeline → code</h3><div class="tablewrap"><table><thead><tr><th>Stage</th><th>Script</th></tr></thead><tbody>
+ <tr><td>Leak-free dataset</td><td><code>data/prepare_dataset.py</code></td></tr>
+ <tr><td>FedAvg / DP-FedAvg engine</td><td><code>federated/fl_core.py</code>, <code>simulate_federated.py</code>, <code>dp_utils.py</code></td></tr>
+ <tr><td>Quantization · pruning</td><td><code>model/compress_model.py</code>, <code>model/prune_model.py</code></td></tr>
+ <tr><td>Explainability (4 methods + faithfulness)</td><td><code>model/explainability.py</code></td></tr>
+ <tr><td>Benchmarks</td><td><code>benchmarking/benchmark.py</code></td></tr>
+ <tr><td>Multi-seed studies</td><td><code>experiments/fl_comparison.py</code>, <code>compression_study.py</code>, <code>generalization.py</code>, <code>federated/compare_dp.py</code></td></tr>
+ <tr><td>Edge node · cloud website</td><td><code>edge_node/edge_app.py</code>, <code>cloud_aggregator/dashboard_app.py</code></td></tr></tbody></table></div></div>
+{% endblock %}

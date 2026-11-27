@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}EdgeSentry{% endblock %} · EdgeSentry</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/common.js') }}"></script>
+</head>
+<body>
+<nav>
+  <a class="brand" href="/" style="color:inherit;text-decoration:none">🛰️ Edge<span>Sentry</span></a>
+  {% for href, label in NAV %}<a class="link {{ 'active' if page == href else '' }}" href="{{ href }}">{{ label }}</a>{% endfor %}
+  <span class="sp"></span>
+  <span id="netpill" class="pillbtn" title="How edge nodes reach this dashboard">● connecting…</span>
+  <button class="pillbtn" onclick="toggleTheme()">◐ theme</button>
+</nav>
+<div class="container">{% block body %}{% endblock %}</div>
+<footer>EdgeSentry · Federated Edge-AI for Predictive Maintenance · data: CWRU Bearing Data Center</footer>
+<script>
+(async function(){try{const s=await api('/api/status');const n=$('#netpill');
+ n.textContent=s.net.mqtt_connected?'● MQTT connected ('+s.net.broker+')':(s.net.broker?'● MQTT waiting…':'● REST mode (no broker)');
+ n.style.color=s.net.mqtt_connected?'var(--ok)':'var(--warn)';}catch(e){}})();
+</script>
+{% block scripts %}{% endblock %}
+</body></html>

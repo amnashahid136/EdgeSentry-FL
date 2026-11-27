@@ -1,0 +1,10 @@
+archive/
+*.mat
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.DS_Store
+.vscode/
+.idea/

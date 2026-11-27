@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% block title %}Live Fleet{% endblock %}
+{% block body %}
+<h1>Live Fleet Monitor</h1>
+<p class="sub">Every decision below was made <b>on the edge device</b> by an INT8 model. Only a tiny status message reaches this dashboard — never the raw vibration signal. Use the controls on each card to orchestrate the edge: inject faults, swap the model, cut the uplink, add sensor noise.</p>
+<div id="banner" class="banner"></div>
+
+<div class="grid g4" id="kpis">
+  <div class="card kpi"><div class="l">Machines online</div><div class="v" id="k-online">–</div><div class="d" id="k-online-d"></div></div>
+  <div class="card kpi"><div class="l">Active alarms</div><div class="v" id="k-alarms">–</div><div class="d">≥3 of last 5 windows faulty</div></div>
+  <div class="card kpi"><div class="l">Windows classified on-device</div><div class="v" id="k-win">–</div><div class="d" id="k-win-d"></div></div>
+  <div class="card kpi"><div class="l">Edge latency (mean)</div><div class="v" id="k-lat">–</div><div class="d" id="k-rt"></div></div>
+  <div class="card kpi"><div class="l">Uplink traffic saved</div><div class="v" id="k-bw">–</div><div class="d" id="k-bw-d"></div></div>
+  <div class="card kpi"><div class="l">Live accuracy (vs ground truth)</div><div class="v" id="k-acc">–</div><div class="d">demo-only: truth is in the payload</div></div>
+</div>
+
+<div style="display:flex;gap:8px;margin:18px 0 8px;align-items:center;flex-wrap:wrap">
+  <h2 style="margin:0;flex:1">Machines</h2>
+  <span class="muted small">All machines:</span>
+  <button class="ghost" onclick="fleetCmd({scenario:'auto'})">Auto story</button>
+  <button class="danger" onclick="fleetCmd({scenario:'inner_race_fault'})">Inject inner-race fault</button>
+  <button class="ghost" onclick="fleetCmd({scenario:'normal'})">Force healthy</button>
+  <a class="btn ghost" href="/api/export.csv">⬇ Export events CSV</a>
+</div>
+<div id="machines" class="grid g3"></div>
+
+<div class="grid g2" style="margin-top:14px">
+  <div class="card"><h3>Kurtosis — bearing health indicator</h3><div class="muted small">Computed on-device per window. Impulsive faults push kurtosis far above the ≈3 of a Gaussian signal.</div><div class="chartbox"><canvas id="ch-kurt"></canvas></div></div>
+  <div class="card"><h3>On-device inference latency (ms)</h3><div class="muted small">Single-thread TFLite on the host CPU running the demo.</div><div class="chartbox"><canvas id="ch-lat"></canvas></div></div>
+</div>
+
+<h2>What actually leaves a device</h2>
+<div class="card"><div class="muted small" style="margin-bottom:6px">Latest message received from the fleet (JSON, as published over MQTT). The 1024-sample raw window is not in it.</div><pre id="payload" class="mono">waiting for an edge node…</pre></div>
+
+<h2>Recent events</h2>
+<div class="card tablewrap"><table><thead><tr><th>Time</th><th>Machine</th><th>Prediction</th><th>Status</th><th class="n">Conf.</th><th class="n">Kurtosis</th><th class="n">Latency</th><th>Model</th><th></th></tr></thead><tbody id="events"></tbody></table></div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/fleet.js') }}"></script>{% endblock %}

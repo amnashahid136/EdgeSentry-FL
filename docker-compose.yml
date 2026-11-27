@@ -1,0 +1,62 @@
+# EdgeSentry deployment topology (edge-cloud continuum)
+#
+#   mosquitto      MQTT broker: status messages go UP, control commands go DOWN
+#   dashboard      Flask website: live fleet, explainability, FL / compression / privacy pages
+#   edge-node-1/2/3  simulated edge devices, each running on-device INT8 inference on its
+#                  own sensor shard and publishing only small status messages (never raw data)
+#
+# Edge nodes are CPU/memory-limited to mimic a small device. TensorFlow itself needs
+# ~300 MB of RAM just to import, hence 512m; with tflite-runtime on a real Pi it is far less.
+#
+#   docker compose up --build        then open  http://localhost:5050
+
+x-edge: &edge
+  build:
+    context: .
+    dockerfile: edge_node/Dockerfile
+  depends_on:
+    - mosquitto
+  restart: unless-stopped
+  cpus: "0.5"
+  mem_limit: 512m
+  environment:
+    - MQTT_PORT=1883
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: edgesentry-broker
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: cloud_aggregator/Dockerfile
+    container_name: edgesentry-dashboard
+    depends_on:
+      - mosquitto
+    environment:
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=1883
+      - PORT=5000
+    ports:
+      # host 5050 -> container 5000 (host 5000 is taken by AirPlay Receiver on macOS)
+      - "5050:5000"
+
+  edge-node-1:
+    <<: *edge
+    container_name: edgesentry-edge01
+    command: ["--machine_id", "edge01", "--transport", "mqtt", "--broker", "mosquitto", "--delay", "1.0"]
+
+  edge-node-2:
+    <<: *edge
+    container_name: edgesentry-edge02
+    command: ["--machine_id", "edge02", "--transport", "mqtt", "--broker", "mosquitto", "--delay", "1.3"]
+
+  edge-node-3:
+    <<: *edge
+    container_name: edgesentry-edge03
+    command: ["--machine_id", "edge03", "--transport", "mqtt", "--broker", "mosquitto", "--delay", "0.8"]

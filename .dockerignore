@@ -1,0 +1,6 @@
+archive/
+**/__pycache__/
+*.pyc
+.git/
+saved_models/seeds/
+data/*/train.npz

@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block title %}Federated Learning{% endblock %}
+{% block body %}
+<h1>Federated Learning</h1>
+<p class="sub">Three machines each hold vibration data from a <b>different defect size</b> and may not share it. Each trains locally and sends only model <i>weights</i>; a server averages them (FedAvg). Below: what that buys over training alone, what it costs versus pooling all the data, and where it still falls short.</p>
+<div id="headline" class="grid g4"></div>
+
+<div class="grid g2" style="margin-top:14px">
+  <div class="card"><h3>Convergence over federated rounds</h3><div class="muted small" id="conv-sub">Shaded band = ± 1 std across seeds.</div><div class="chartbox tall"><canvas id="ch-conv"></canvas></div></div>
+  <div class="card"><h3>FedAvg vs. training alone vs. pooling data</h3><div class="muted small">Test accuracy on the held-out windows of all three machines (mean ± std over seeds).</div><div class="chartbox"><canvas id="ch-cmp"></canvas></div><div id="cmp-table" class="tablewrap"></div></div>
+</div>
+
+<div class="grid g2" style="margin-top:14px">
+  <div class="card"><h3>Why train together? Local models don't travel</h3><div class="muted small">A model trained on one machine's data is excellent at home and poor on the rest of the fleet.</div><div class="chartbox"><canvas id="ch-node"></canvas></div></div>
+  <div class="card"><h3>Confusion matrix — official FedAvg model</h3><div id="cm" class="tablewrap"></div><div id="perclass" class="small muted" style="margin-top:8px"></div></div>
+</div>
+
+<h2>Does it work on a machine it has never seen?</h2>
+<div class="card"><div class="muted small">Leave-one-severity-out: train on two machines, test on the third (a defect size never seen in training). This is a harder, more realistic question than the standard split.</div><div id="gen" class="tablewrap" style="margin-top:8px"></div></div>
+
+<h2>FedAvg by hand (with numbers)</h2>
+<div class="card"><div class="muted small">The server's whole job, for a single weight. Change the numbers and watch the average move — each machine's vote is weighted by how much data it has.</div>
+  <div class="grid g3" style="margin-top:8px" id="fa-inputs"></div>
+  <pre id="fa-out" class="mono" style="margin-top:10px"></pre></div>
+<div class="callout"><b>Why the FedAvg gap?</b> Each node trains to near-perfection on <i>its own</i> defect size, so the local updates pull in different directions ("client drift"). Averaging them gives a model that is good for everyone but optimal for no one. We tried lower learning rates, fewer local epochs, a different normalisation layer and learning-rate decay: decay stabilises convergence, none of them closes the gap — it is a property of this non-IID split.</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/learning.js') }}"></script>{% endblock %}

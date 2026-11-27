@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% block title %}Edge Compression{% endblock %}
+{% block body %}
+<h1>Edge Compression & Benchmarks</h1>
+<p class="sub">A model that wins on a GPU is useless if it doesn't fit the device. Two independent knobs shrink it: <b>INT8 quantization</b> (fewer bits per weight) and <b>structured pruning</b> (fewer filters, fine-tuned <i>federatedly</i>). Every row below is the mean over seeds, and includes a <b>control</b> that gets the same extra training as the pruned models — so any “pruning improved accuracy” claim is tested, not assumed.</p>
+<div id="headline" class="grid g4"></div>
+<h2>All variants</h2>
+<div class="card tablewrap" id="tbl"></div>
+<div class="grid g2" style="margin-top:14px">
+  <div class="card"><h3>Size vs. accuracy</h3><div class="muted small">Bottom-left is cheap, top is accurate. Pruned+INT8 should sit far left without dropping.</div><div class="chartbox tall"><canvas id="ch-pareto"></canvas></div></div>
+  <div class="card"><h3>Robustness to sensor noise</h3><div class="muted small">Accuracy after adding white noise at the given SNR to the test windows. Real accelerometers are noisy; the model was trained on clean lab data.</div><div class="chartbox tall"><canvas id="ch-noise"></canvas></div></div>
+</div>
+<div id="verdict"></div>
+
+<h2>Will it fit on real hardware?</h2>
+<div class="card tablewrap"><div class="muted small">Flash must hold the model file; RAM must hold the peak activation buffers (+ runtime overhead). Pick a variant:</div>
+  <select id="fit-variant" style="max-width:320px;margin:8px 0"></select><div id="fit"></div>
+  <div class="muted small">Back-of-envelope only: runtime/overhead assumed ≈ 20 KB RAM; “est. time” = MACs ÷ clock at an optimistic 1 MAC/cycle (SIMD kernels can beat this, slow memory will not). Not measured.</div></div>
+
+<h2>Measured latency (this machine, official model)</h2>
+<div class="card tablewrap" id="bench"></div>
+<div class="callout warn"><b>Read latency carefully.</b> TFLite latency is <i>the same</i> for the full and pruned model: for a model this small the interpreter's per-call overhead dominates, not the arithmetic — so the compute saving from pruning (MACs column) only shows up on a slower core where arithmetic matters. Keras's ~10 ms is eager-mode overhead, not a fair comparison. These numbers rank variants on the host CPU; they are not Raspberry Pi numbers.</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/compression.js') }}"></script>{% endblock %}
