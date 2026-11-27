@@ -157,8 +157,3 @@ tests/test_smoke.py        sanity tests          docs/PROPOSAL.md   submission d
 * **Not noise-robust** (trained on clean data). **FedAvg trails pooled training** (client drift).
 * The sensor is simulated by replaying held-out test windows; the MQTT broker is plaintext and unauthenticated (production: TLS, ACLs, signed model updates, secure aggregation).
 
-## Running on real hardware
-Copy `edge_node/`, `common.py`, `data/<id>/test.npz` (or replace `Scenario.next_window` with real ADC code) and the two `.tflite` files to a Raspberry Pi,
-`pip install tflite-runtime numpy paho-mqtt` (the engine uses it automatically), then
-`python3 edge_node/edge_app.py --machine_id edge01 --transport mqtt --broker <cloud-ip>`.
-An ESP32 simulated in **Wokwi** is possible but a separate port (TensorFlow Lite Micro, C++ firmware, a 1-D-conv op check) — not included.
