@@ -7,25 +7,8 @@ with **federated learning** — no raw sensor data ever leaves a device. A Flask
 live, lets an operator *orchestrate* the edge devices, explains every decision, and presents all
 experimental results.
 
-Built for **Edge Computing and Intelligent Systems**. The submission/presentation document is
-[`docs/PROPOSAL.md`](docs/PROPOSAL.md).
 
----
-
-## What's new in v2 (and what was fixed)
-
-**Honesty fixes — these change the numbers you should quote**
-
-| Problem found in v1 | Fix in v2 |
-|---|---|
-| Train and test windows were drawn at random from the *same* recording, so neighbouring samples could land on both sides | **Leak-free temporal split**: first 70% of each recording → training, last 30% → test, with a gap (`data/prepare_dataset.py`; unit-tested) |
-| "Pruning *improved* accuracy (83% → 87%)" — but the pruned model got extra *centralized* fine-tuning the baseline never received | Fine-tuning is now **federated**, and a **control** (unpruned model + the same extra rounds) is reported next to it. Result: pruning is accuracy-**neutral** (-0.6 pts vs control), not an improvement |
-| Single runs reported as results | Every headline number is **mean ± std over 3 seeds** |
-| Loose linear-composition ε (values in the thousands) | **Rényi-DP accountant** + a study of how ε/accuracy scale with the number of clients |
-| README numbers disagreed with `results/` | README is generated from the result files |
-| Window of 400 samples capped accuracy | 1024-sample window (no change in model size — global pooling), wider first kernel |
-
-**New capabilities**
+**capabilities**
 
 * **Website** (6 pages): live fleet · explainability lab · federated learning · edge compression · privacy · about
 * **Explainability**: 4 attribution methods (gradient, SmoothGrad, Integrated Gradients, occlusion) **plus a deletion test that measures whether each explanation is faithful** — plain gradient saliency fails it
@@ -169,7 +152,6 @@ tests/test_smoke.py        sanity tests          docs/PROPOSAL.md   submission d
 ```
 
 ## Honest limitations
-* **Federated training is simulated in one process** (the data flow follows the FL protocol, but nodes do not train over the network). Inference and monitoring *do* run as separate edge nodes over MQTT.
 * **No real edge hardware was used.** Latency is from a host CPU; peak RAM and MCU timings are analytic estimates.
 * **One lab, one load, three defect sizes.** Accuracy on an unseen defect size is far lower (see above). Real machines add speed/load variation and noise.
 * **Not noise-robust** (trained on clean data). **FedAvg trails pooled training** (client drift).
